@@ -1,0 +1,53 @@
+﻿body {
+    display: flex;
+    min-height: 100vh;
+    flex-direction: column;
+    font-family: "Roboto";
+    overflow-y: scroll;
+    overflow-x: hidden;
+}
+
+.promo {
+    width: 100%;
+}
+
+main {
+    flex: 1 0 auto;
+}
+
+.imageFill {
+    height: 100px;
+    object-fit: cover;
+}
+
+imageCover {
+    height: 50px;
+    object-fit: cover;
+}
+
+.promo-caption {
+    font-size: 1.7rem;
+    font-weight: 500;
+    margin-top: 5px;
+    margin-bottom: 0;
+}
+
+/* Set padding to keep content from hitting the edges */
+.body-content {
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+/* Override the default bootstrap behavior where horizontal description lists 
+   will truncate terms that are too long to fit in the left column 
+*/
+.dl-horizontal dt {
+    white-space: normal;
+}
+
+/* Set width on the form input elements since they're 100% wide by default */
+/*input,
+select,
+textarea {
+    max-width: 300px;
+}*/

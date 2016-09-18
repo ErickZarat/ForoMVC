@@ -1,0 +1,143 @@
+﻿@{
+    ViewBag.Title = "Login";
+}
+@section scripts{
+    <script>
+        $('.modal-trigger').leanModal();
+        if (($.cookie("UsuarioID") != 0 && $.cookie("UsuarioID") != '') && $.cookie("UsuarioID") != undefined) {
+            window.location = '../Home/Dashboard';
+        }
+        $('#navItems').remove();
+        $('#mobile-demo').remove();
+        $('#btnLogo').remove();
+        var uri = 'http://localhost:63488/api/UsuarioApi';
+        $(document).ready(function () {
+
+            var liAdd = '';
+            var liPre = '';
+
+            $.getJSON('http://localhost:63488/api/CategoriaApi').done(function (data) {
+                $.each(data, function (key, item) {
+                    $.each(item.Preguntas, function (keyP, itemP) {
+                        liPre += '<li>' + itemP.Interrogante + '</li>'
+                    });
+                    liAdd += '<li><div class="collapsible-header"><i class="material-icons">filter_drama</i>' + item.Nombre + '</div>' +
+                        '<div class="collapsible-body"><ul class="container">' + liPre + '</ul></p></div></li>';
+                    liPre = '';
+                });
+                $('#divCategoria').append(liAdd);
+                $('#loadingBarLoginCat').hide(0);
+            });
+
+            $('.collapsible').collapsible({
+                accordion: true // A setting that changes the collapsible behavior to expandable instead of the default accordion style
+            });
+
+            $('#btnGuardar').click(function () {
+                var $nombre = $('#txtNombre').val();
+                var $apellido = $('#txtApellido').val();
+                var $email = $('#txtEmail').val();
+                var $contrasena = $('#txtContrasena').val();
+                var $role = 'client';
+
+                $.ajax({
+                    url: uri,
+                    type: 'POST',
+                    data: { Nombre: $nombre, Apellido: $apellido, Email: $email, Contrasena: $contrasena, Role: $role },
+                    dataType: 'json',
+                    error: function () {
+                        Materialize.toast('Error al registrar el usuario', 3000, 'rounded')
+                        setTimeout(function () { location.reload(); }, 3000);
+                    },
+                    success: function () {
+                        Materialize.toast('Usuario registrado', 3000, 'rounded')
+                        setTimeout(function () { location.reload(); }, 3000);
+                    }
+                });
+            });
+        });
+    </script>
+}
+<div class="row">
+    <div id="login" class="col s12 m5 z-depth-4 card-panel">
+        <form class="login-form">
+            <div class="row">
+                <div class="input-field col s12 center">
+                    <img src="~/Content/images/logo.png" style="height:150px; width:150px; background-color:#212121;" alt="" class="circle responsive-img valign profile-image-login">
+                    <p class="center login-form-text">Login Z Foro</p>
+                </div>
+            </div>
+            <div class="row margin">
+                <div class="input-field col s12">
+                    <i class="mdi-social-person-outline prefix"></i>
+                    <input id="txtEmailLog" type="text">
+                    <label for="txtEmailLog" class="center-align">Email</label>
+                </div>
+            </div>
+            <div class="row margin">
+                <div class="input-field col s12">
+                    <i class="mdi-action-lock-outline prefix"></i>
+                    <input id="txtContraLog" type="password">
+                    <label for="txtContraLog">Contraseña</label>
+                </div>
+            </div>
+            <div class="row">
+                <div class="input-field col s12">
+                    <button type="button" id="btnLogin" class="btn waves-effect waves-light col s12">Login</button>
+                </div>
+            </div>
+            <div class="row">
+                <div class="input-field col s6 m6 l6">
+                    <p class="margin medium-small"><a class="modal-trigger waves-effect waves-green btn-flat" href="#newModal">Registrate Ahora!</a></p>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="col s12 m7" style="padding-left: 10px;">
+        <h3 class="center">Algunas categorias...</h3>
+        <div id="loadingBarLoginCat" class="progress">
+            <div class="indeterminate"></div>
+        </div>
+
+        <ul id="divCategoria" class="collapsible popout" data-collapsible="accordion"></ul>
+
+    </div>
+</div>
+
+<!-- Modal new Category -->
+<div id="newModal" class="modal modal-fixed-footer" style="height: 1100px;">
+    <div class=" modal-content" style="padding: 5px">
+        <div class="card">
+            <div class="card-image">
+                <img src="~/Content/images/imageTitle.jpg" class="imageFill">
+                <span class="card-title">Nuevo usuario</span>
+            </div>
+            <div class="card-content">
+
+                <div class="modal-body">
+                    <div class="input-field">
+                        <input type="text" id="txtNombre">
+                        <label for="txtNombre">Nombre</label>
+                    </div>
+                    <div class="input-field">
+                        <input type="text" id="txtApellido">
+                        <label for="txtApellido">Apellido</label>
+                    </div>
+                    <div class="input-field">
+                        <input type="email" class="validate" id="txtEmail">
+                        <label for="txtEmail">Email</label>
+                    </div>
+                    <div class="input-field">
+                        <input type="password" id="txtContrasena">
+                        <label for="txtContrasena">Contraseña</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat" id="btnGuardar">Registrar</a>
+        <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">Cancelar</a>
+    </div>
+</div>

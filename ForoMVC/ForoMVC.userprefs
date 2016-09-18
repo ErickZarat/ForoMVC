@@ -1,0 +1,12 @@
+﻿<Properties StartupItem="ForoMVC/ForoMVC.csproj">
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="ForoMVC/Views/Usuario/Index.cshtml">
+    <Files>
+      <File FileName="ForoMVC/Views/Usuario/Index.cshtml" Line="332" Column="7" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+</Properties>

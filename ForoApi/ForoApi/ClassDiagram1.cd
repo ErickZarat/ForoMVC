@@ -1,0 +1,116 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="ForoApi.BundleConfig">
+    <Position X="11.5" Y="5.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAA=</HashCode>
+      <FileName>App_Start\BundleConfig.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ForoApi.RouteConfig">
+    <Position X="11.5" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAA=</HashCode>
+      <FileName>App_Start\RouteConfig.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ForoApi.WebApiConfig">
+    <Position X="11.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>App_Start\WebApiConfig.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ForoApi.Controllers.CategoriaApiController">
+    <Position X="2.25" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAACAQAAAAAAAAACAAAAAQAAAAAAAAAAACAIA=</HashCode>
+      <FileName>Controllers\CategoriaApiController.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ForoApi.Controllers.ComentarioApiController">
+    <Position X="6" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AADAAAAAACAQAAAAAAAAAACAAAAAAAAAAACQACAAAAA=</HashCode>
+      <FileName>Controllers\ComentarioApiController.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ForoApi.Controllers.HomeController">
+    <Position X="11.5" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAA=</HashCode>
+      <FileName>Controllers\HomeController.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ForoApi.Controllers.PreguntaApiController">
+    <Position X="9.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AgAAAAAAACAQAACCAAAAAAACAAAAAAAAAAAAABAAAAA=</HashCode>
+      <FileName>Controllers\PreguntaApiController.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ForoApi.Controllers.RespuestaApiController">
+    <Position X="6" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAIQAAACCQAAAAAAAAAAAQAAgAAAAgAAAAAAAAAAA=</HashCode>
+      <FileName>Controllers\RespuestaApiController.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ForoApi.Controllers.UsuarioApiController">
+    <Position X="2.25" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAACAYACBAAAEAAAAAAAAAAAAAAEAAQAAAAAA=</HashCode>
+      <FileName>Controllers\UsuarioApiController.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ForoApi.DAL.ForoContext">
+    <Position X="9.5" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAEAAAAAAAACAAAAAAAEAAEAAAEAAAAAAAAAAAEgA=</HashCode>
+      <FileName>DAL\ForoContext.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ForoApi.DAL.ForoInitializer">
+    <Position X="7.75" Y="4.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>DAL\ForoInitializer.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ForoApi.Models.Categoria">
+    <Position X="0.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAgCAAAAAAgAABAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\Categoria.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ForoApi.Models.Comentario">
+    <Position X="4.25" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAQgCAAAAAAAAAQAIAAgAAAAAAEAQAAEAA=</HashCode>
+      <FileName>Models\Comentario.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ForoApi.Models.Pregunta">
+    <Position X="7.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAgAAgBAAAAEARAIAAAAAAAAAEAQAAAAA=</HashCode>
+      <FileName>Models\Pregunta.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ForoApi.Models.Respuesta">
+    <Position X="4.25" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAABAAAAgAAAAAAIAAAQAIAAAAAAAAAEASAAAAA=</HashCode>
+      <FileName>Models\Respuesta.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ForoApi.Models.Usuario">
+    <Position X="0.5" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAACAAgCIEEAAAgEAAAAAAAAAAAAAAAAAAEAA=</HashCode>
+      <FileName>Models\Usuario.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

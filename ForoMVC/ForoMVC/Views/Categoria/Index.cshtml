@@ -1,0 +1,268 @@
+﻿@{
+    ViewBag.Title = "Categorias";
+}
+
+<h2>Categoria</h2>
+
+@section scripts{
+
+    <script>
+        var $usuarioCookie = 'UsuarioID'
+        var $roleCookie = 'Role';
+        if ($.cookie($usuarioCookie) == undefined ||
+                    $.cookie($usuarioCookie) == 0 ||
+                    $.cookie($usuarioCookie) == '') {
+            location = '../Home/Index';
+        }
+
+        if ($.cookie("Role") == 'client' || $.cookie("Role") == undefined) {
+            $('.adminControl').remove();
+        }
+
+        $('#LoadingBar').hide(0);
+        var uri = 'http://localhost:63488/api/CategoriaApi';
+
+        $(document).ready(function () {
+            $('.modal-trigger').leanModal();
+
+            var contenido = '';
+            $('#LoadingBar').show(0);
+            $.getJSON(uri).done(function (data) {
+                $.each(data, function (key, item) {
+                    contadorP = 0;
+                    $.each(item.Preguntas, function (keyP, itemP) {
+                        contadorP += 1;
+                    });
+                    contenido += '<div class="col s12 m4" style="padding-left: 5px; padding-right: 5px;"><div class="card blue-grey darken-1">' +
+                        '<div class="card-content white-text" style="height: 172px;"><span class="card-title">' + item.Nombre + '</span><p>' + item.Descripcion +
+                        '</p><p>Preguntas: <span class="new badge">' + contadorP + '</span></p></div>' +
+                        '<div class="card-action"><a onclick="btnExplorar(' + item.ID + ')" href="#">Explorar</a>' +
+                        '<a onclick="eliminar(' + item.ID + ')" class="adminControl right-align waves-effect waves-circle waves-light btn-floating secondary-content transparent"><i class="material-icons">delete</i></a>' +
+                        '<a onclick="editar(' + item.ID + ')" class="adminControl right-align waves-effect waves-circle waves-light btn-floating secondary-content transparent"><i class="material-icons">mode_edit</i></a></div></div></div>';
+                });
+                $('#catalogoCategoria').append(contenido);
+                $('#LoadingBar').hide(0);
+                if ($.cookie("Role") == 'client' || $.cookie("Role") == undefined) {
+                    $('.adminControl').remove();
+                }
+                $('.tooltipped').tooltip({ delay: 50 });
+            });
+
+            $('#btnGuardar').click(function () {
+                var $nombre = $('#txtNombre').val();
+                var $descripcion = $('#txtDescripcion').val();
+                $.ajax({
+                    url: uri,
+                    type: 'POST',
+                    data: { Nombre: $nombre, Descripcion: $descripcion },
+                    error: function () {
+                        Materialize.toast('Error al agregar categoria', 3000, 'rounded')
+                    },
+                    success: function () {
+                        Materialize.toast('Categoria agregada', 3000, 'rounded')
+                        actualizarCategorias();
+                        $('#txtNombre').val('');
+                        $('#txtDescripcion').val('');
+                    }
+                });
+            });
+        });
+
+        function actualizarCategorias() {
+            $('#catalogoCategoria div').remove();
+            contenido = '';
+            $('#LoadingBar').show(0);
+            $.getJSON(uri).done(function (data) {
+                $.each(data, function (key, item) {
+                    contadorP = 0;
+                    $.each(item.Preguntas, function (keyP, itemP) {
+                        contadorP += 1;
+                    });
+                    contenido += '<div class="col s12 m4" style="padding-left: 5px; padding-right: 5px;"><div class="card blue-grey darken-1">' +
+                    '<div class="card-content white-text" style="height: 172px;"><span class="card-title">' + item.Nombre + '</span><p>' + item.Descripcion +
+                    '</p><p>Preguntas: <span class="new badge">' + contadorP + '</span></p></div>' +
+                    '<div class="card-action"><a onclick="btnExplorar(' + item.ID + ')" href="#">Explorar</a>' +
+                    '<a onclick="eliminar(' + item.ID + ')" class="adminControl right-align waves-effect waves-circle waves-light btn-floating secondary-content transparent"><i class="material-icons">delete</i></a>' +
+                    '<a onclick="editar(' + item.ID + ')" class="adminControl right-align waves-effect waves-circle waves-light btn-floating secondary-content transparent"><i class="material-icons">mode_edit</i></a></div></div></div>';
+                });
+                $('#catalogoCategoria').append(contenido);
+                $('#LoadingBar').hide(0);
+                if ($.cookie("Role") == 'client' || $.cookie("Role") == undefined) {
+                    $('.adminControl').remove();
+                }
+                $('.tooltipped').tooltip({ delay: 50 });
+            });
+        }
+
+        function btnExplorar(idstr) {
+            $('#catalogoPreguntas li').remove();
+            var contenido = '';
+            var comentarios = '';
+            var uriP = uri + '/' + idstr;
+            $.getJSON(uriP).done(function (data) {
+                $('#modalHeader h4').remove();
+                $('#modalHeader').append('<h4>' + data.Nombre + '</h4>');
+                $.each(data.Preguntas, function (key, item) {
+                    comentarios = '';
+                    $.each(item.Comentarios, function (keyc, itemc) {
+                        comentarios += '<li>' + itemc.ComentarioHecho + '</li>'
+                    });
+                    contenido += '<li><div class="collapsible-header"><i class="material-icons">help_outline</i>' + item.Interrogante + '</div><div class="collapsible-body"><ul>' + comentarios + '</ul></div></li>';
+                });
+                $('#catalogoPreguntas').append(contenido);
+                $('.collapsible').collapsible({
+                    accordion: false // A setting that changes the collapsible behavior to expandable instead of the default accordion style
+                });
+            });
+            $('#preguntasModal').openModal();
+        }
+
+        function eliminar(id) {
+            $('#delModal').openModal();
+            $('#btnEliminar').click(function () {
+                $.ajax({
+                    url: uri + '/' + id,
+                    type: 'DELETE',
+                    error: function () {
+                        Materialize.toast('Error al eliminar categoria', 3000, 'rounded')
+                    },
+                    success: function () {
+                        actualizarCategorias();
+                        $('#delModal').closeModal();
+                        Materialize.toast('Categoria eliminada', 3000, 'rounded')
+                    }
+                });
+            });
+        }
+
+        function editar(id) {
+            $.getJSON(uri + '/' + id)
+            .done(function (data) {
+                $("#txtNombreEd").val(data.Nombre);
+                $("#txtDescripcionEd").val(data.Descripcion);
+                $('#editModal').openModal();
+            });
+
+            $("#btnGuardarEd").click(function () {
+                $.ajax({
+                    url: uri + '/' + id,
+                    type: 'PUT',
+                    data: { ID: id, Nombre: $("#txtNombreEd").val(), Descripcion: $("#txtDescripcionEd").val() },
+                    success: function (response) {
+                        actualizarCategorias();
+                        $('#editModal').closeModal();
+                        Materialize.toast('Categoria modificada', 3000, 'rounded');
+                    },
+                    error: function () {
+                        Materialize.toast('Error al modificar categoria', 3000, 'rounded');
+                    }
+                });
+            });
+        }
+
+    </script>
+}
+
+<div id="fabButton" class="adminControl fixed-action-btn" style="bottom: 45px; right: 45px;">
+    <a id="btnAdd" class="modal-trigger waves-effect waves-light btn-large red btn-floating" href="#newModal">
+        <i class="large material-icons">add</i>
+    </a>
+</div>
+
+<div id="LoadingBar" class="progress">
+    <div class="indeterminate"></div>
+</div>
+
+<div class="row" id="catalogoCategoria">
+</div>
+
+<!-- Modal Structure -->
+<div id="preguntasModal" class="modal">
+    <div class="modal-content">
+        <h4 id="modalHeader">Preguntas Categoria: </h4>
+        <ul class="collapsible popout" data-collapsible="accordion" id="catalogoPreguntas"></ul>
+    </div>
+    <div class="modal-footer">
+        <a href="#!" class=" modal-action modal-close waves-effect waves-green btn-flat">Agree</a>
+    </div>
+</div>
+
+<!-- Modal Delete Category-->
+<div id="delModal" class="modal modal-fixed-footer adminControl" style="height: 300px;">
+    <div class=" modal-content">
+        <div class="card">
+            <div class="card-image">
+                <img src="~/Content/images/imageTitle.jpg" class="imageFill">
+                <span class="card-title">Eliminar Categoria</span>
+            </div>
+            <div class="card-content">
+
+                <div class="modal-body">
+                    <p>Esta seguro de eliminar esta categoria?</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat" id="btnEliminar">Eliminar</a>
+        <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">Cancelar</a>
+    </div>
+</div>
+
+<!-- Modal new Category -->
+<div id="newModal" class="modal modal-fixed-footer adminControl" style="height: 425px;">
+    <div class=" modal-content">
+        <div class="card">
+            <div class="card-image">
+                <img src="~/Content/images/imageTitle.jpg" class="imageFill">
+                <span class="card-title">Nueva Categoria</span>
+            </div>
+            <div class="card-content">
+
+                <div class="modal-body">
+                    <div class="input-field">
+                        <input type="text" id="txtNombre">
+                        <label for="txtNombre">Nombre de la categoria</label>
+                    </div>
+                    <div class="input-field">
+                        <input type="text" id="txtDescripcion">
+                        <label for="txtDescripcion">Descripcion</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat" id="btnGuardar">Guardar</a>
+        <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">Cancelar</a>
+    </div>
+</div>
+
+<!-- Modal Edit Category -->
+<div id="editModal" class="modal modal-fixed-footer adminControl" style="height: 425px;">
+    <div class=" modal-content">
+        <div class="card">
+            <div class="card-image">
+                <img src="~/Content/images/imageTitle.jpg" class="imageFill">
+                <span class="card-title">Editar Categoria</span>
+            </div>
+            <div class="card-content">
+
+                <div class="modal-body">
+                    <div class="input-field">
+                        <input value=" " type="text" id="txtNombreEd">
+                        <label for="txtNombreEd" class="active">Nombre de la categoria</label>
+                    </div>
+                    <div class="input-field">
+                        <input value=" " type="text" id="txtDescripcionEd">
+                        <label for="txtDescripcionEd" class="active">Descripcion</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat" id="btnGuardarEd">Guardar</a>
+        <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">Cancelar</a>
+    </div>
+</div>

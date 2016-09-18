@@ -1,0 +1,593 @@
+﻿@{
+    ViewBag.Title = "Preguntas";
+}
+<h2>Preguntas</h2>
+@section scripts{
+
+<script>
+    var $usuarioCookie = 'UsuarioID'
+    var $roleCookie = 'Role';
+
+    //verifica la session
+    if ($.cookie($usuarioCookie) == undefined ||
+                $.cookie($usuarioCookie) == 0 ||
+                $.cookie($usuarioCookie) == '') {
+        location = '../Home/Index';
+    }
+
+    //verifica rol del usuario
+    if ($.cookie("Role") == 'client' || $.cookie("Role") == undefined) {
+        $('.adminControl').remove();
+    }
+    $('#LoadingBar').hide(0);
+    $('#LoadingBarModal').hide(0);
+    //inicializa las direcciones del api a utilizar en la pagina
+    var uriCat = 'http://localhost:63488/api/CategoriaApi';
+    var uriPre = 'http://localhost:63488/api/PreguntaApi';
+    var uriCom = 'http://localhost:63488/api/ComentarioApi';
+    var uriRes = 'http://localhost:63488/api/RespuestaApi';
+    var contenido = '';
+    var content = '';
+    $(document).ready(function () {
+        //inicializa los botones de modal
+        $('.modal-trigger').leanModal();
+        $('#LoadingBar').show(0);
+        var controls = '';
+
+        //carga todos los datos al inicio de la pagina
+        $.getJSON(uriPre).done(function (data) {
+            $.each(data, function (key, item) {
+                //carga controles de edicion de sus propios comentarios al usuario iniciado
+                if (item.Usuario.ID == $.cookie($usuarioCookie)) {
+                    controls = '<a onclick="eliminarPregunta(' + item.ID + ')" class="tooltipped right-align waves-effect waves-circle waves-light btn-floating secondary-content transparent" data-position="bottom" data-delay="50" data-tooltip="Eliminar"><i class="material-icons" style="color: black;">delete</i></a>' +
+                    '<a onclick="editarPregunta(' + item.ID + ')" class="tooltipped right-align waves-effect waves-circle waves-light btn-floating secondary-content transparent" data-position="bottom" data-delay="50" data-tooltip="Modificar"><i class="material-icons" style="color: black;">mode_edit</i></a>';
+                } else { controls = ''; }
+                content += '<li><div class="collapsible-header"><i class="material-icons">help_outline</i>' +
+                    item.Interrogante + '</div><div class="collapsible-body"><div class="row"><div class="col s8 center">' +
+                    item.Descripcion + '.<a onclick="detalles(' + item.ID + ')" class="tooltipped right-align waves-effect waves-circle waves-light btn-floating secondary-content transparent" data-position="bottom" data-delay="50" data-tooltip="Ver Pregunta"><i class="material-icons" style="color: black;">forum</i></a>' + controls + '</div><div class="col s4 left-align">' + formatearFecha(item.Tiempo) + '<div>' +
+                    item.Valoracion + '/10</div><div>' + item.Usuario.Nombre + ' ' + item.Usuario.Apellido +
+                    '</div></div></div></div></li>';
+            });
+            $('#catalogoPreguntas').append(content);
+            $('#LoadingBar').hide(0);
+            if ($.cookie("Role") == 'client' || $.cookie("Role") == undefined) {
+                $('.adminControl').remove();
+            }
+            $('.tooltipped').tooltip({ delay: 50 });
+        });
+
+        //inicializa el select de filtrado con todas las categorias
+        contenido = '<option value="" disabled selected>Seleccione una Categoria</option>';
+        $.getJSON(uriCat).done(function (data) {
+            $.each(data, function (key, item) {
+                contenido += '<option value="' + item.ID + '">' + item.Nombre + '</option>';
+            });
+            $('#slcCat').append(contenido);
+            $('#slcCategoria').append(contenido);
+            $('#slcEdCategoria').append(contenido);
+            $('select').material_select();
+        });
+
+        //guarda la pregunta generada dentro del modal
+        $('#btnGuardar').click(function () {
+            var $interrogante = $('#txtInterrogante').val();
+            var $descripcion = $('#txtDescripcion').val();
+            var $categoria = $('#slcCategoria').val();
+            $.ajax({
+                url: uriPre,
+                type: 'POST',
+                dataType: 'json',
+                data: { Interrogante: $interrogante, Descripcion: $descripcion, CategoriaID: $categoria, UsuarioID: $.cookie($usuarioCookie), Valoracion: 0 },
+                success: function () {
+                    actualizar();
+                    Materialize.toast('Pregunta agregada', 3000, 'rounded');
+                },
+                error: function () {
+                    Materialize.toast('Error al agregar pregunta', 3000, 'rounded');
+                }
+            });
+        });
+
+        //inicializa el date picker
+        $('.datepicker').pickadate({
+            selectMonths: true,
+            selectYears: 15
+        });
+
+        //accion que agrega un nuevo comentario
+        $('#btnNewComentario').click(function () {
+            var $id = $('#hidID').val();
+            var comentario = $('#txtNewComentario').val();
+
+            $.ajax({
+                url: uriCom,
+                type: 'POST',
+                dataType: 'json',
+                data: { ComentarioHecho: comentario, Valoracion: 0, PreguntaID: $id, UsuarioID: $.cookie($usuarioCookie) },
+                success: function () {
+                    Materialize.toast('Comentario agregado', 3000, 'rounded');
+                    obtenerDetalles($id);
+                    $('#txtNewComentario').val('');
+                },
+                error: function () {
+                    Materialize.toast('Error al comentar', 3000, 'rounded');
+                }
+            });
+        });
+
+        //accion en el select de categoria para filtrar preguntas por categoria
+        $('#slcCat').change(function () {
+            $('#LoadingBar').show(0);
+            $('#catalogoPreguntas li').remove();
+            $.getJSON(uriCat + '/' + this.value).done(function (data) {
+                content = '';
+                $.each(data.Preguntas, function (key, item) {
+                    content += '<li><div class="collapsible-header"><i class="material-icons">help_outline</i>' +
+                    item.Interrogante + '</div><div class="collapsible-body"><div class="row"><div class="col s8 center">' +
+                    item.Descripcion + '.<a onclick="detalles(' + item.ID + ')" class="tooltipped right-align waves-effect waves-circle waves-light btn-floating secondary-content transparent" data-position="right" data-delay="50" data-tooltip="Ver Pregunta"><i class="material-icons" style="color: black;">forum</i></a></div><div class="col s4 left-align">' + formatearFecha(item.Tiempo) + '<div>' +
+                    item.Valoracion + '/10</div><div>' + item.Usuario.Nombre + ' ' + item.Usuario.Apellido +
+                    '</div></div></div></div></li>';
+                });
+                $('#catalogoPreguntas').append(content);
+                $('#LoadingBar').hide(0);
+                $('.collapsible').collapsible({
+                    accordion: true // A setting that changes the collapsible behavior to expandable instead of the default accordion style
+                });
+            });
+        });
+    });
+
+    //accion que actualiza todos los datos despues de realizar una accion
+    function actualizar() {
+        $('#LoadingBar').show(0);
+        content = '';
+        var controls = '';
+        $('#catalogoPreguntas li').remove();
+        $.getJSON(uriPre).done(function (data) {
+            $.each(data, function (key, item) {
+                if (item.Usuario.ID == $.cookie($usuarioCookie)) {
+                    controls = '<a onclick="eliminarPregunta(' + item.ID + ')" class="tooltipped right-align waves-effect waves-circle waves-light btn-floating secondary-content transparent" data-position="bottom" data-delay="50" data-tooltip="Eliminar"><i class="material-icons" style="color: black;">delete</i></a>' +
+                    '<a onclick="editarPregunta(' + item.ID + ')" class="tooltipped right-align waves-effect waves-circle waves-light btn-floating secondary-content transparent" data-position="bottom" data-delay="50" data-tooltip="Modificar"><i class="material-icons" style="color: black;">mode_edit</i></a>';
+                } else { controls = ''; }
+                content += '<li><div class="collapsible-header"><i class="material-icons">help_outline</i>' +
+                   item.Interrogante + '</div><div class="collapsible-body"><div class="row"><div class="col s8 center">' +
+                   item.Descripcion + '.<a onclick="detalles(' + item.ID + ')" class="tooltipped right-align waves-effect waves-circle waves-light btn-floating secondary-content transparent" data-position="bottom" data-delay="50" data-tooltip="Ver Pregunta"><i class="material-icons" style="color: black;">forum</i></a>' + controls + '</div><div class="col s4 left-align">' + formatearFecha(item.Tiempo) + '<div>' +
+                   item.Valoracion + '/10</div><div>' + item.Usuario.Nombre + ' ' + item.Usuario.Apellido +
+                   '</div></div></div></div></li>';
+            });
+            $('#catalogoPreguntas').append(content);
+            $('#LoadingBar').hide(0);
+            if ($.cookie("Role") == 'client' || $.cookie("Role") == undefined) {
+                $('.adminControl').remove();
+            }
+            $('.collapsible').collapsible({
+                accordion: true // A setting that changes the collapsible behavior to expandable instead of the default accordion style
+            });
+        });
+    }
+
+    //accion de boton para mostrar el modal de los detalles
+    function detalles(id) {
+        obtenerDetalles(id);
+        $('#preguntaModal').openModal();
+
+    }
+
+    //accion para eliminar un comentario
+    function delComentario(id) {
+        $.ajax({
+            url: uriCom + '/' + id,
+            type: 'DELETE',
+            success: function () {
+                var $id = $('#hidID').val();
+                obtenerDetalles($id);
+                Materialize.toast('Comentario eliminado', 3000, 'rounded')
+            },
+            error: function () {
+                Materialize.toast('Error al eliminar comentario', 3000, 'rounded')
+            }
+        });
+    }
+
+    //accion para eliminar una respuesta
+    function delRespuesta(id) {
+        $.ajax({
+            url: uriRes + '/' + id,
+            type: 'DELETE',
+            success: function () {
+                var $id = $('#hidID').val();
+                obtenerDetalles($id);
+                Materialize.toast('respuesta eliminada', 3000, 'rounded')
+            },
+            error: function () {
+                Materialize.toast('Error al eliminar Respuesta', 3000, 'rounded')
+            }
+        });
+    }
+
+    //accion para editar una pregunta
+    function editarPregunta(id) {
+        var data;
+        $.getJSON(uriPre + '/' + id).done(function (datax) {
+            $('#editPregunta').openModal();
+            data = datax;
+            $('#txtEdDescripcion').val(data.Descripcion);
+            $('#txtEdInterrogante').val(data.Interrogante);
+            $('#slcEdCategoria').val(data.Categoria.ID);
+        });
+
+        $('#btnGuardarEd').click(function () {
+            var $inte = $('#txtEdInterrogante').val();
+            var $desc = $('#txtEdDescripcion').val();
+            var $cat = $('#slcEdCategoria').val();
+
+
+            $.ajax({
+                url: uriPre + '/' + id,
+                type: 'PUT',
+                dataType: 'json',
+                data: { ID: id, Interrogante: $inte, Descripcion: $desc, Valoracion: data.Valoracion, Tiempo: data.Tiempo, CategoriaID: $cat, UsuarioID: data.Usuario.ID },
+                success: function () {
+                    Materialize.toast('Pregunta actualizada', 3000, 'rounded');
+                    actualizar();
+                },
+                error: function () {
+                    Materialize.toast('Error al modificar pregunta', 3000, 'rounded');
+                }
+            });
+        });
+    }
+
+    //accion del boton eliminar en la pregunta
+    function eliminarPregunta(id) {
+        $('#delModal').openModal();
+        $('#btnEliminar').click(function () {
+            $.ajax({
+                url: uriPre + '/' + id,
+                type: 'DELETE',
+                error: function () {
+                    Materialize.toast('Error al eliminar Pregunta', 3000, 'rounded')
+                },
+                success: function () {
+                    actualizar();
+                    $('#delModal').closeModal();
+                    Materialize.toast('pregunta eliminada', 3000, 'rounded')
+                }
+            });
+        });
+    }
+
+    //accion crear nueva respuesta a un comentario
+    function newRespuesta(id) {
+        var respuesta = $('#txtRespuesta_' + id).val();
+
+        $.ajax({
+            url: uriRes,
+            type: 'POST',
+            dataType: 'json',
+            data: { RespuestaHecha: respuesta, Valoracion: 0, ComentarioID: id, UsuarioID: $.cookie($usuarioCookie) },
+            success: function () {
+                Materialize.toast('Respuesta agregada', 3000, 'rounded');
+                obtenerDetalles($('#hidID').val());
+                $('#txtRespuesta_' + id).val('');
+            },
+            error: function () {
+                Materialize.toast('Error al Responder', 3000, 'rounded');
+            }
+        });
+        $('.responder').hide(300);
+    }
+
+    //accion para editar respuesta
+    function editRespuesta(id) { }
+
+    //accion para modificar comentario
+    function editComentario(id) { }
+
+    //obtiene los detalles de la pregunta seleccionada
+    function obtenerDetalles(id) {
+        $('#LoadingBarModal').show(0);
+        $('#hidID').val(id);
+        $('#catalogoCard div').remove();
+        $('#catalogoCard h4').remove();
+        $('#catalogoCard p').remove();
+        var controlsCom = '';
+        var controlsRes = '';
+        var respuestas = '';
+        var comentarios = '';
+        var pregunta = '';
+        $.getJSON(uriPre + '/' + id).done(function (data) {
+            //for each de comentarios por pregunta
+            $.each(data.Comentarios, function (keyC, itemC) {
+
+                //---------------------------------------------------------------------------------------
+                // for each de respuesta por comentario
+                $.each(itemC.Respuestas, function (keyR, itemR) {
+                    if ($.cookie($usuarioCookie) == itemR.Usuario.ID) {
+                        // si es el usuario iniciado crea boton eliminar y modificar
+                        controlsRes = '<a onclick="delRespuesta(' + itemR.ID + ')" class="tooltipped right-align waves-effect waves-circle waves-light btn-floating secondary-content transparent" data-position="bottom" data-delay="50" data-tooltip="Eliminar"><i class="material-icons">delete</i></a>' +
+                            '<a onclick="editRespuesta(' + itemR.ID + ')" class="tooltipped right-align waves-effect waves-circle waves-light btn-floating secondary-content transparent" data-position="bottom" data-delay="50" data-tooltip="Eliminar"><i class="material-icons">mode_edit</i></a>';
+                    } else if ($.cookie($roleCookie) == 'admin') {
+                        //si es admin solo crea el boton eliminar
+                        controlsRes = '<a onclick="delRespuesta(' + itemR.ID + ')" class="tooltipped right-align waves-effect waves-circle waves-light btn-floating secondary-content transparent" data-position="bottom" data-delay="50" data-tooltip="Eliminar"><i class="material-icons">delete</i></a>';
+                    } else {
+                        controlsRes = '';
+                    }
+
+                    //crea panel de respuesta una por una
+                    respuestas += '<div class="col s12"><div class="card-panel teal white-text"><div class="row">' +
+                        '<div class="col s6"><p>' + itemR.RespuestaHecha + '</p></div><div class="col s3"><p>' + itemR.Usuario.Nombre + '</p><p>' + formatearFecha(itemR.Tiempo) + '</p></div><div class="col s3"><p class="center">Valoracion</p>' +
+                        '<p><a onclick="valoracionRespuesta(1,' + itemR.ID + ')" class="tooltipped waves-effect waves-circle waves-light btn-floating secondary-content transparent" data-position="right" data-delay="50" data-tooltip="Bueno"><i class="material-icons">exposure_plus_1</i></a>' +
+                        '<a href="#" class="white-text tooltipped waves-effect waves-circle waves-light btn-flat secondary-content transparent" data-position="right" data-delay="50" data-tooltip="Valoracion">' + itemR.Valoracion + '</a>' +
+                        '<a onclick="valoracionRespuesta(-1, ' + itemR.ID + ')" class="tooltipped waves-effect waves-circle waves-light btn-floating secondary-content transparent" data-position="right" data-delay="50" data-tooltip="Malo"><i class="material-icons">exposure_neg_1</i></a></p>' + controlsRes +
+                         '</div></div></div></div>';
+                    controlsRes = '';
+                });
+
+                if (respuestas == '') {
+                    respuestas = '<div class="container"><div class="row"><div class="col s12"><div class="card-panel red"><span class="white-text">Este comentario no contiene respuestas</span></div></div></div></div>';
+                }
+                //---------------------------------------------------------------------------------------
+                if ($.cookie($usuarioCookie) == itemC.Usuario.ID) {
+                    // si es el usuario iniciado crea boton eliminar y modificar
+                    controlsCom = '<a onclick="delComentario(' + itemC.ID + ')" class="tooltipped right-align waves-effect waves-circle waves-light btn-floating secondary-content transparent" data-position="bottom" data-delay="50" data-tooltip="Eliminar"><i class="material-icons">delete</i></a>' +
+                        '<a onclick="editComentario(' + itemC.ID + ')" class="tooltipped right-align waves-effect waves-circle waves-light btn-floating secondary-content transparent" data-position="bottom" data-delay="50" data-tooltip="Eliminar"><i class="material-icons">mode_edit</i></a>';
+                } else if ($.cookie($roleCookie) == 'admin') {
+                    //si es admin solo crea el boton eliminar
+                    controlsCom = '<a onclick="delComentario(' + itemC.ID + ')" class="tooltipped right-align waves-effect waves-circle waves-light btn-floating secondary-content transparent" data-position="bottom" data-delay="50" data-tooltip="Eliminar"><i class="material-icons">delete</i></a>';
+                } else {
+                    controlsCom = '';
+                }
+
+                //crea card de comentario uno por uno con sus respectivas respuestas
+                comentarios += '<div class="row" style="margin-top: 0px; margin-bottom: 0px;"><div class="col s12"><div class="card blue-grey darken-1"><div class="card-content white-text" style="padding-bottom: 5px;"><div class="row">' +
+                    '<div class="col s6"><p>' + itemC.ComentarioHecho + '</p></div><div class="col s3"><p>' + itemC.Usuario.Nombre + '</p><p>' + formatearFecha(itemC.Tiempo) + '</p><p>' + itemC.Valoracion + '</p></div><div class="col s3">' +
+                    '<p class="center">Valorar</p><p><a onclick="valoracionComentario(1, ' + itemC.ID + ' )" class="tooltipped waves-effect waves-circle waves-light btn-floating secondary-content transparent" data-position="right" data-delay="50" data-tooltip="Bueno"><i class="material-icons">exposure_plus_1</i></a>' +
+                    '<a href="#" class="white-text tooltipped waves-effect waves-circle waves-light btn-flat secondary-content transparent" data-position="right" data-delay="50" data-tooltip="Valoracion">' + itemC.Valoracion + '</a>' +
+                    '<a onclick="valoracionComentario(-1, ' + itemC.ID + ')" class="tooltipped waves-effect waves-circle waves-light btn-floating secondary-content transparent" data-position="right" data-delay="50" data-tooltip="Malo"><i class="material-icons">exposure_neg_1</i></a></p>' +
+                    '</div></div></div><div class="card-action"><a href="#" onclick="verRespuestas(' + itemC.ID + ')"> ver respuestas</a><a onclick="mostrarRespuesta(' + itemC.ID + ')" class="btn-flat waves-effect waves-light align-right tooltipped" data-position="right" data-delay="50" data-tooltip="Responder">Responder</a>' + controlsCom +
+                    '</div></div></div></div><div class="container responder" id="divResponder_' + itemC.ID + '"><div class="row"><div class="input-field col s12"><input id="txtRespuesta_' + itemC.ID + '" type="text"><label for="txtNewRespuesta">Respuesta Nueva</label><a onclick="newRespuesta(' + itemC.ID + ')" class="btn-floating waves-effect waves-light red align-right tooltipped" data-position="right" data-delay="50" data-tooltip="Responder"><i class="material-icons">send</i></a></div></div></div><div class="container"><div class="row respuestasCardDiv" id="respuestasDiv_' + itemC.ID + '">' + respuestas + '</div></div>';
+                controlsCom = '';
+                respuestas = '';
+
+
+            });
+            //=============================================================================
+            pregunta = '<h4>' + data.Interrogante + '</h4><p>' + data.Descripcion + '</p><p><a onclick="valoracionPregunta(1,' + data.ID + ')" class="tooltipped waves-effect waves-circle waves-light btn-floating secondary-content transparent" data-position="right" data-delay="50" data-tooltip="Bueno"><i class="material-icons" style="color: black">exposure_plus_1</i></a>' +
+                        '<a href="#" class="tooltipped waves-effect waves-circle waves-light btn-flat secondary-content transparent" data-position="right" data-delay="50" data-tooltip="Valoracion" style="color: black">' + data.Valoracion + '</a>' +
+                        '<a onclick="valoracionPregunta(-1, ' + data.ID + ')" class="tooltipped waves-effect waves-circle waves-light btn-floating secondary-content transparent" data-position="right" data-delay="50" data-tooltip="Malo"><i class="material-icons" style="color: black">exposure_neg_1</i></a></p>' + comentarios;
+            $('#catalogoCard').append(pregunta);
+            $('.respuestasCardDiv').hide(0);
+            $('.responder').hide(0);
+            comentarios = '';
+            pregunta = '';
+        });
+        $('#LoadingBarModal').hide(0);
+        if ($.cookie("Role") == 'client' || $.cookie("Role") == undefined) {
+            $('.adminControl').remove();
+        }
+    }
+
+    //muestra textbox para responder
+    function mostrarRespuesta(id) {
+        $('.responder').hide(300);
+        $('#divResponder_' + id).show(300);
+    }
+
+    //muestra las respuestas de el comentario con el id
+    function verRespuestas(id) {
+        $('.respuestasCardDiv').hide(300);
+        $('#respuestasDiv_' + id).show(300);
+    }
+
+    //formatea un string de fecha a un formato amigable
+    function formatearFecha(strDate) {
+        var date = new Date(strDate);
+        var newDate = date.toString('dd-MM-yy HH:MM');
+        return newDate;
+    }
+
+    //accion para actualizar valoracion de una respuesta
+    function valoracionRespuesta(valoracionN, idRespuesta) {
+        $.getJSON(uriRes + '/' + idRespuesta).done(function (data) {
+            $.ajax({
+                url: uriRes + '/' + idRespuesta,
+                type: 'PUT',
+                dataType: 'json',
+                data: { ID: idRespuesta, RespuestaHecha: data.RespuestaHecha, Tiempo: data.Tiempo, Valoracion: data.Valoracion + valoracionN, ComentarioID: data.ComentarioID, UsuarioID: data.UsuarioID },
+                success: function () {
+                    Materialize.toast('valoracion agregada', 3000, 'rounded');
+                    obtenerDetalles(data.Comentario.PreguntaID);
+                },
+                error: function () {
+
+                }
+            });
+        });
+    }
+
+    //accion para actualizar valoracion de una respuesta
+    function valoracionPregunta(valoracionN, idPregunta) {
+        $.getJSON(uriPre + '/' + idPregunta).done(function (data) {
+            $.ajax({
+                url: uriPre + '/' + idPregunta,
+                type: 'PUT',
+                dataType: 'json',
+                data: { ID: idPregunta, Interrogante: data.Interrogante, Tiempo: data.Tiempo, Valoracion: data.Valoracion + valoracionN, UsuarioID: data.UsuarioID, Descripcion:data.Descripcion, CategoriaID: data.CategoriaID },
+                success: function () {
+                    Materialize.toast('valoracion agregada', 3000, 'rounded');
+                    obtenerDetalles(data.ID);
+                },
+                error: function () {
+
+                }
+            });
+        });
+    }
+    //accion para actualizar la valoracion de un comentario
+    function valoracionComentario(valoracionN, idComentario) {
+        $.getJSON(uriCom + '/' + idComentario).done(function (data) {
+            $.ajax({
+                url: uriCom + '/' + idComentario,
+                type: 'PUT',
+                dataType: 'json',
+                data: { ID: idComentario, ComentarioHecho: data.ComentarioHecho, Tiempo: data.Tiempo, Valoracion: data.Valoracion + valoracionN, PreguntaID: data.PreguntaID, UsuarioID: data.UsuarioID },
+                success: function () {
+                    obtenerDetalles(data.PreguntaID);
+                    Materialize.toast('valoracion agregada', 3000, 'rounded');
+                },
+                error: function () {
+                    Materialize.toast('valoracion agregada', 3000, 'rounded');
+                }
+            });
+        });
+    }
+</script>
+}
+<!--Floating Button agregar pregunta-->
+<div id="fabButton" class="fixed-action-btn" style="bottom: 45px; right: 45px;">
+    <a id="btnAdd" class="modal-trigger waves-effect waves-light btn-large red btn-floating" href="#newPregunta">
+        <i class="large material-icons">add</i>
+    </a>
+</div>
+
+<!--Barra de carga-->
+<div id="LoadingBar" class="progress">
+    <div class="indeterminate"></div>
+</div>
+
+<!--div de filtrado-->
+<div class="row">
+    <div class="col s12 m9">
+        <ul id="catalogoPreguntas" class="collapsible" data-collapsible="accordion"></ul>
+    </div>
+
+    <div class="col s12 m3">
+        <div class="card blue-grey darken-1">
+            <div class="card-content white-text">
+                <span class="card-title">Filtro</span>
+                <div class="input-field">
+                    <select id="slcCat"> </select>
+                    <label class="white-text" for="slcCat">Categoria</label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Pregunta Nueva -->
+<div id="newPregunta" class="modal modal-fixed-footer" style="height: 1100px;">
+    <div class=" modal-content" style="padding: 5px">
+        <div class="card">
+            <div class="card-image">
+                <img src="~/Content/images/imageTitle.jpg" class="imageFill">
+                <span class="card-title">Nueva Pregunta</span>
+            </div>
+            <div class="card-content">
+                <div class="modal-body">
+                    <div class="input-field">
+                        <input type="text" id="txtInterrogante">
+                        <label for="txtInterrogante">Pregunta</label>
+                    </div>
+                    <div class="input-field">
+                        <input type="text" id="txtDescripcion">
+                        <label for="txtDescripcion">Descripcion</label>
+                    </div>
+                    <div class="input-field">
+                        <select id="slcCategoria" size="3"> </select>
+                        <label for="slcCategoria">Categoria</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat" id="btnGuardar">Guardar</a>
+        <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">Cancelar</a>
+    </div>
+</div>
+
+<!--Modal detalles de pregunta-->
+<div id="preguntaModal" class="modal modal-fixed-footer">
+    <div class="modal-content">
+        <input type="hidden" id="hidID" />
+        <div id="LoadingBarModal" class="progress">
+            <div class="indeterminate"></div>
+        </div>
+        <div id="catalogoCard"></div>
+        <ul class="collection with-header" id="collComentarios"></ul>
+
+        <div class="row">
+            <div class="input-field col s10">
+                <input id="txtNewComentario" type="text" style="width: 100%" />
+                <label for="txtNewComentario">Comentario Nuevo</label>
+            </div>
+            <div class="col s2">
+                <a id="btnNewComentario" class="btn-floating waves-effect waves-light red align-right tooltipped white-text" data-position="right" data-delay="50" data-tooltip="Comentar"><i class="material-icons left">comment</i></a>
+            </div>
+        </div>
+
+        <div id="fabButton" class="fixed-action-btn" style="bottom: 70px; right: 24px;">
+            <a id="btnAdd" class=" waves-effect waves-light btn-large red btn-floating" href="#txtNewComentario">
+                <i class="large material-icons">add</i>
+            </a>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a href="#!" class=" modal-action modal-close waves-effect waves-green btn-flat">Cerrar</a>
+    </div>
+</div>
+
+<!--Modal Eliminar Pregunta-->
+<div id="delModal" class="modal modal-fixed-footer" style="height: 300px;">
+    <div class=" modal-content" style="padding: 5px">
+        <div class="card">
+            <div class="card-image">
+                <img src="~/Content/images/imageTitle.jpg" class="imageFill">
+                <span class="card-title">Eliminar Pregunta</span>
+            </div>
+            <div class="card-content">
+
+                <div class="modal-body">
+                    <p>Esta seguro de eliminar esta Pregunta?</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat" id="btnEliminar">Eliminar</a>
+        <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">Cancelar</a>
+    </div>
+</div>
+
+<!--Modal Editar pregunta-->
+<div id="editPregunta" class="modal modal-fixed-footer" style="height: 1100px;">
+    <div class=" modal-content" style="padding: 5px">
+        <div class="card">
+            <div class="card-image">
+                <img src="~/Content/images/imageTitle.jpg" class="imageFill">
+                <span class="card-title">Editar Pregunta</span>
+            </div>
+            <div class="card-content">
+                <div class="modal-body">
+                    <div class="input-field">
+                        <input type="text" id="txtEdInterrogante" value=" ">
+                        <label for="txtInterrogante" class="active">Pregunta</label>
+                    </div>
+                    <div class="input-field">
+                        <input type="text" id="txtEdDescripcion" value=" ">
+                        <label for="txtDescripcion" class="active">Descripcion</label>
+                    </div>
+                    <div class="input-field">
+                        <select id="slcEdCategoria" size="3"> </select>
+                        <label for="slcEdCategoria">Categoria</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat" id="btnGuardarEd">Guardar</a>
+        <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">Cancelar</a>
+    </div>
+</div>
